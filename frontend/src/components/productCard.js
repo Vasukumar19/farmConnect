@@ -1,7 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useLanguage } from '../context/LanguageContext'; // ✅ Import language hook
 
 export default function ProductCard({ product }) {
+  const { t } = useLanguage(); // ✅ Get translation function
+  
   if (!product) return null;
 
   const { images, name, price, unit, _id, category, isOrganicCertified, farmer, isInStock } = product;
@@ -26,15 +29,17 @@ export default function ProductCard({ product }) {
           }}
         />
         
+        {/* ✅ Organic Badge with Translation */}
         {isOrganicCertified && (
           <span className="badge badge-success" style={{ position: 'absolute', top: '12px', left: '12px' }}>
-            🌿 Organic
+            🌿 {t('product.organic')}
           </span>
         )}
         
+        {/* ✅ Out of Stock Badge with Translation */}
         {!isInStock && (
           <span className="badge badge-danger" style={{ position: 'absolute', top: '12px', right: '12px' }}>
-            Out of Stock
+            {t('product.outOfStock')}
           </span>
         )}
       </div>
@@ -45,7 +50,7 @@ export default function ProductCard({ product }) {
 
       {farmer && (
         <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '12px' }}>
-          By {farmer.name || 'Unknown Farmer'}
+          {t('product.farmerName')}: {farmer.name || 'Unknown Farmer'}
         </p>
       )}
 
@@ -64,12 +69,13 @@ export default function ProductCard({ product }) {
         </span>
       )}
 
+      {/* ✅ View Details Button with Translation */}
       <Link 
         to={`/product/${_id}`} 
         className="btn btn-primary"
         style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
       >
-        View Details
+        {t('product.viewDetails')}
       </Link>
     </div>
   );

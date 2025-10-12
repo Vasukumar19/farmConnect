@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext'; // ✅ Import language hook
 import api from '../services/api';
 
 export default function ProductDetail() {
@@ -12,13 +13,11 @@ export default function ProductDetail() {
   const [addingToCart, setAddingToCart] = useState(false);
   const { addToCart } = useCart();
   const { isAuthenticated, user } = useAuth();
+  const { t } = useLanguage(); // ✅ Get translation function
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchProduct();
-  }, [id]);
-
-  const fetchProduct = async () => {
+  // ✅ Wrap fetchProduct in useCallback to fix ESLint dependency warning
+  const fetchProduct = useCallback(async () => {
     try {
       const response = await api.get(`/product/${id}`);
       if (response.data.success) {
@@ -29,7 +28,11 @@ export default function ProductDetail() {
       console.error('Error fetching product:', error);
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchProduct();
+  }, [id, fetchProduct]); // ✅ Added fetchProduct to dependency array
 
   const handleAddToCart = async () => {
     if (!isAuthenticated) {
@@ -42,7 +45,7 @@ export default function ProductDetail() {
       await addToCart(product._id);
     }
     setAddingToCart(false);
-    alert('Added to cart successfully!');
+    alert(t('cart.orderSuccess')); // ✅ Translated alert
   };
 
   const handleOrderNow = async () => {
@@ -79,13 +82,13 @@ export default function ProductDetail() {
         textAlign: 'center'
       }}>
         <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#111827', marginBottom: '16px' }}>
-          Product not found
+          {t('common.error')} {/* ✅ Translated */}
         </h2>
         <button
           onClick={() => navigate('/')}
           className="btn btn-primary"
         >
-          Back to Home
+          {t('product.backToProducts')} {/* ✅ Translated */}
         </button>
       </div>
     );
@@ -111,7 +114,7 @@ export default function ProductDetail() {
             marginBottom: '24px'
           }}
         >
-          ← Back to Products
+          ← {t('product.backToProducts')} {/* ✅ Translated */}
         </button>
 
         <div className="card" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '48px' }}>
@@ -131,7 +134,7 @@ export default function ProductDetail() {
             />
             {product.isOrganicCertified && (
               <span className="badge badge-success" style={{ position: 'absolute', top: '16px', left: '16px' }}>
-                🌿 Certified Organic
+                🌿 {t('product.certifiedOrganic')} {/* ✅ Translated */}
               </span>
             )}
             {!product.isInStock && (
@@ -152,7 +155,7 @@ export default function ProductDetail() {
                   fontWeight: 'bold',
                   fontSize: '18px'
                 }}>
-                  OUT OF STOCK
+                  {t('product.outOfStockMsg')} {/* ✅ Translated */}
                 </span>
               </div>
             )}
@@ -191,13 +194,17 @@ export default function ProductDetail() {
             {/* Product Info */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
               <div>
-                <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Available Quantity</p>
+                <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>
+                  {t('product.availableQty')} {/* ✅ Translated */}
+                </p>
                 <p style={{ fontWeight: '600' }}>{product.availableQuantity} {product.unit}</p>
               </div>
               {product.isOrganicCertified && (
                 <div>
-                  <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Certification</p>
-                  <p style={{ fontWeight: '600' }}>🌿 Organic Certified</p>
+                  <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>
+                    {t('product.certification')} {/* ✅ Translated */}
+                  </p>
+                  <p style={{ fontWeight: '600' }}>🌿 {t('product.organicCertified')}</p>
                 </div>
               )}
             </div>
@@ -210,12 +217,22 @@ export default function ProductDetail() {
                 marginBottom: '24px'
               }}>
                 <h3 style={{ fontSize: '14px', fontWeight: '700', color: '#111827', marginBottom: '16px' }}>
-                  Farmer Information
+                  {t('product.farmerInfo')} {/* ✅ Translated */}
                 </h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <p><strong>Name:</strong> {product.farmer.name}</p>
-                  {product.farmer.farmName && <p><strong>Farm:</strong> {product.farmer.farmName}</p>}
-                  {product.farmer.location && <p><strong>Location:</strong> {product.farmer.location}</p>}
+                  <p>
+                    <strong>{t('product.farmerName')}:</strong> {product.farmer.name}
+                  </p>
+                  {product.farmer.farmName && (
+                    <p>
+                      <strong>{t('product.farmName')}:</strong> {product.farmer.farmName}
+                    </p>
+                  )}
+                  {product.farmer.location && (
+                    <p>
+                      <strong>{t('product.location')}:</strong> {product.farmer.location}
+                    </p>
+                  )}
                 </div>
               </div>
             )}
@@ -224,7 +241,9 @@ export default function ProductDetail() {
             {product.isInStock && user?.userType === 'customer' && (
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
-                  <label style={{ fontWeight: '600' }}>Quantity:</label>
+                  <label style={{ fontWeight: '600' }}>
+                    {t('product.quantity')}: {/* ✅ Translated */}
+                  </label>
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -276,13 +295,13 @@ export default function ProductDetail() {
                     disabled={addingToCart}
                     className="btn btn-primary"
                   >
-                    {addingToCart ? 'Adding...' : 'Add to Cart'}
+                    {addingToCart ? t('common.loading') : t('product.addToCart')} {/* ✅ Translated */}
                   </button>
                   <button
                     onClick={handleOrderNow}
                     className="btn btn-secondary"
                   >
-                    Order Now
+                    {t('product.orderNow')} {/* ✅ Translated */}
                   </button>
                 </div>
               </div>
@@ -296,13 +315,20 @@ export default function ProductDetail() {
                 padding: '16px'
               }}>
                 <p style={{ color: '#92400e' }}>
-                  Please <button onClick={() => navigate('/login')} style={{
-                    background: 'transparent',
-                    border: 'none',
-                    color: '#16a34a',
-                    fontWeight: '600',
-                    cursor: 'pointer'
-                  }}>login</button> to order this product
+                  {t('product.loginToOrder')} {/* ✅ Translated */}
+                  {' '}
+                  <button
+                    onClick={() => navigate('/login')}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#16a34a',
+                      fontWeight: '600',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {t('navbar.login')}
+                  </button>
                 </p>
               </div>
             )}
@@ -315,7 +341,7 @@ export default function ProductDetail() {
                 padding: '16px'
               }}>
                 <p style={{ color: '#1e40af' }}>
-                  You are logged in as a farmer. Only customers can order products.
+                  {t('product.farmerMsg')} {/* ✅ Translated */}
                 </p>
               </div>
             )}

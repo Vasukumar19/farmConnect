@@ -1,51 +1,51 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import api from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function MyOrders() {
   const [orders, setOrders] = useState([]);
   const [stats, setStats] = useState({});
   const [loading, setLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState('');
+  const { t } = useLanguage();
 
-  useEffect(() => {
-    loadOrders();
-  }, [selectedStatus]);
-
-  const loadOrders = async () => {
+  // Wrap in useCallback to avoid the warning
+  const loadOrders = useCallback(async () => {
     try {
       const params = selectedStatus ? { status: selectedStatus } : {};
       const response = await api.get('/order/customer', { params });
-      
       if (response.data.success) {
         setOrders(response.data.data);
         setStats(response.data.stats || {});
       }
       setLoading(false);
     } catch (error) {
-      console.error('Error loading orders:', error);
       setLoading(false);
     }
-  };
+  }, [selectedStatus]);
+
+  useEffect(() => {
+    loadOrders();
+  }, [loadOrders]);
+
 
   const handleCancelOrder = async (orderId) => {
-    if (!window.confirm('Are you sure you want to cancel this order?')) {
+    if (!window.confirm(t('orders.cancelConfirm'))) {
       return;
     }
-
     try {
-      const response = await api.post('/order/cancel', { 
+      const response = await api.post('/order/cancel', {
         orderId,
-        reason: 'Cancelled by customer'
+        reason: t('orders.cancelledByCustomer')
       });
-      
       if (response.data.success) {
-        alert('Order cancelled successfully');
+        alert(t('orders.cancelSuccess'));
         loadOrders();
       } else {
-        alert(response.data.message);
+        alert(response.data.message || t('orders.cancelFailed'));
       }
     } catch (error) {
-      alert(error.response?.data?.message || 'Failed to cancel order');
+      alert(error.response?.data?.message || t('orders.cancelFailed'));
     }
   };
 
@@ -69,6 +69,7 @@ export default function MyOrders() {
         minHeight: '100vh'
       }}>
         <div className="spinner"></div>
+        <p style={{ marginTop: '14px', color: '#6b7280' }}>{t('common.loading')}</p>
       </div>
     );
   }
@@ -81,29 +82,27 @@ export default function MyOrders() {
     }}>
       <div className="max-w-screen">
         <h1 style={{ fontSize: '32px', fontWeight: '700', color: '#111827', marginBottom: '32px' }}>
-          My Orders
+          {t('orders.myOrders')}
         </h1>
-
         {/* Stats Cards */}
         <div className="grid grid-cols-4" style={{ marginBottom: '32px' }}>
           <div className="card" style={{ background: 'white' }}>
-            <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Total</p>
+            <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>{t('orders.total')}</p>
             <p style={{ fontSize: '28px', fontWeight: '700', color: '#111827' }}>{stats.total || 0}</p>
           </div>
           <div className="card" style={{ background: 'rgba(245, 158, 11, 0.05)', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
-            <p style={{ fontSize: '12px', color: '#b45309', marginBottom: '4px' }}>Pending</p>
+            <p style={{ fontSize: '12px', color: '#b45309', marginBottom: '4px' }}>{t('orders.pending')}</p>
             <p style={{ fontSize: '28px', fontWeight: '700', color: '#b45309' }}>{stats.pending || 0}</p>
           </div>
           <div className="card" style={{ background: 'rgba(16, 185, 129, 0.05)', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
-            <p style={{ fontSize: '12px', color: '#065f46', marginBottom: '4px' }}>Completed</p>
+            <p style={{ fontSize: '12px', color: '#065f46', marginBottom: '4px' }}>{t('orders.completed')}</p>
             <p style={{ fontSize: '28px', fontWeight: '700', color: '#065f46' }}>{stats.completed || 0}</p>
           </div>
           <div className="card" style={{ background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
-            <p style={{ fontSize: '12px', color: '#991b1b', marginBottom: '4px' }}>Cancelled</p>
+            <p style={{ fontSize: '12px', color: '#991b1b', marginBottom: '4px' }}>{t('orders.cancelled')}</p>
             <p style={{ fontSize: '28px', fontWeight: '700', color: '#991b1b' }}>{stats.cancelled || 0}</p>
           </div>
         </div>
-
         {/* Filter */}
         <div className="card" style={{ marginBottom: '24px' }}>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
@@ -119,7 +118,7 @@ export default function MyOrders() {
                 color: selectedStatus === '' ? 'white' : '#111827'
               }}
             >
-              All Orders
+              {t('orders.all')}
             </button>
             {['pending', 'confirmed', 'ready', 'completed', 'cancelled'].map((status) => (
               <button
@@ -136,19 +135,20 @@ export default function MyOrders() {
                   textTransform: 'capitalize'
                 }}
               >
-                {status}
+                {t(`orders.${status}`)}
               </button>
             ))}
           </div>
         </div>
-
         {/* Orders List */}
         {orders.length === 0 ? (
           <div className="card" style={{ textAlign: 'center', padding: '64px 24px' }}>
             <p style={{ fontSize: '18px', color: '#6b7280', marginBottom: '8px' }}>
-              No orders found
+              {t('orders.none')}
             </p>
-            <p style={{ color: '#9ca3af' }}>You haven't placed any orders yet</p>
+            <p style={{ color: '#9ca3af' }}>
+              {t('orders.notPlaced')}
+            </p>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -160,45 +160,43 @@ export default function MyOrders() {
                       {order.product?.name}
                     </h3>
                     <p style={{ fontSize: '12px', color: '#6b7280' }}>
-                      Order ID: {order._id.slice(-8).toUpperCase()}
+                      {t('orders.orderId')}: {order._id.slice(-8).toUpperCase()}
                     </p>
                   </div>
                   <span className={`status ${getStatusColor(order.status)}`}>
-                    {order.status.toUpperCase()}
+                    {t(`orders.${order.status}`)}
                   </span>
                 </div>
-
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '16px' }}>
                   <div>
-                    <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Farmer</p>
+                    <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>{t('orders.farmer')}</p>
                     <p style={{ fontWeight: '600' }}>{order.farmer?.name}</p>
                   </div>
                   <div>
-                    <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Pickup Date</p>
+                    <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>{t('orders.pickupDate')}</p>
                     <p style={{ fontWeight: '600' }}>
                       {new Date(order.pickupDate).toLocaleDateString()}
                     </p>
                   </div>
                   <div>
-                    <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Total Amount</p>
+                    <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>{t('orders.totalAmount')}</p>
                     <p style={{ fontWeight: '600', color: '#16a34a', fontSize: '18px' }}>
                       ₹{order.totalPrice}
                     </p>
                   </div>
                   <div>
-                    <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Payment</p>
+                    <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>{t('orders.payment')}</p>
                     <p style={{ fontWeight: '600' }}>
-                      {order.payment ? '✓ Paid' : 'Pending'}
+                      {order.payment ? t('orders.paid') : t('orders.pending')}
                     </p>
                   </div>
                 </div>
-
                 {(order.status === 'pending' || order.status === 'confirmed') && (
                   <button
                     onClick={() => handleCancelOrder(order._id)}
                     className="btn btn-danger"
                   >
-                    Cancel Order
+                    {t('orders.cancelOrder')}
                   </button>
                 )}
               </div>

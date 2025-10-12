@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -16,6 +17,7 @@ export default function Register() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -26,10 +28,8 @@ export default function Register() {
     e.preventDefault();
     setError('');
     setLoading(true);
-
     try {
       const result = await register(formData);
-      
       if (result.success) {
         if (result.user.userType === 'farmer') {
           navigate('/farmer-products');
@@ -37,10 +37,10 @@ export default function Register() {
           navigate('/');
         }
       } else {
-        setError(result.message || 'Registration failed');
+        setError(result.message || t('register.registerFailed'));
       }
     } catch (err) {
-      setError('An error occurred. Please try again.');
+      setError(t('register.errorOccurred'));
     } finally {
       setLoading(false);
     }
@@ -55,9 +55,9 @@ export default function Register() {
       <div style={{ maxWidth: '800px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
           <h2 style={{ fontSize: '28px', fontWeight: '700', color: '#111827', marginBottom: '8px' }}>
-            Create Your Account
+            {t('register.createAccount')}
           </h2>
-          <p style={{ color: '#6b7280' }}>Join FreshConnect and start your journey</p>
+          <p style={{ color: '#6b7280' }}>{t('register.joinSubtitle')}</p>
         </div>
 
         <div className="card">
@@ -79,7 +79,7 @@ export default function Register() {
             {/* User Type Selection */}
             <div style={{ marginBottom: '24px' }}>
               <label style={{ fontSize: '14px', fontWeight: '600', marginBottom: '12px', display: 'block' }}>
-                I am a:
+                {t('register.userTypeLabel')}
               </label>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
                 <label style={{
@@ -103,7 +103,7 @@ export default function Register() {
                   />
                   <div style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: '24px', marginBottom: '4px' }}>🛒</div>
-                    <span style={{ fontWeight: '600' }}>Customer</span>
+                    <span style={{ fontWeight: '600' }}>{t('register.customer')}</span>
                   </div>
                 </label>
 
@@ -128,7 +128,7 @@ export default function Register() {
                   />
                   <div style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: '24px', marginBottom: '4px' }}>🌾</div>
-                    <span style={{ fontWeight: '600' }}>Farmer</span>
+                    <span style={{ fontWeight: '600' }}>{t('register.farmer')}</span>
                   </div>
                 </label>
               </div>
@@ -137,92 +137,91 @@ export default function Register() {
             {/* Common Fields */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
               <div className="input-group">
-                <label>Full Name *</label>
+                <label>{t('profile.fullName')} *</label>
                 <input
                   name="name"
                   type="text"
                   required
                   value={formData.name}
                   onChange={handleChange}
-                  placeholder="John Doe"
+                  placeholder={t('register.placeholderName')}
                 />
               </div>
 
               <div className="input-group">
-                <label>Phone Number *</label>
+                <label>{t('profile.phone')} *</label>
                 <input
                   name="phone"
                   type="tel"
                   required
                   value={formData.phone}
                   onChange={handleChange}
-                  placeholder="+91 1234567890"
+                  placeholder={t('register.placeholderPhone')}
                 />
               </div>
             </div>
 
             <div className="input-group">
-              <label>Email Address *</label>
+              <label>{t('profile.email')} *</label>
               <input
                 name="email"
                 type="email"
                 required
                 value={formData.email}
                 onChange={handleChange}
-                placeholder="your@email.com"
+                placeholder={t('register.placeholderEmail')}
               />
             </div>
 
             <div className="input-group">
-              <label>Password *</label>
+              <label>{t('register.password')} *</label>
               <input
                 name="password"
                 type="password"
                 required
                 value={formData.password}
                 onChange={handleChange}
-                placeholder="••••••••"
+                placeholder={t('register.passwordPlaceholder')}
               />
-              <small style={{ marginTop: '4px', color: '#6b7280' }}>Must be at least 8 characters</small>
+              <small style={{ marginTop: '4px', color: '#6b7280' }}>{t('register.passwordHint')}</small>
             </div>
 
             {/* Conditional Fields */}
             {formData.userType === 'farmer' ? (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
                 <div className="input-group">
-                  <label>Farm Name *</label>
+                  <label>{t('profile.farmName')} *</label>
                   <input
                     name="farmName"
                     type="text"
                     required
                     value={formData.farmName}
                     onChange={handleChange}
-                    placeholder="Green Valley Farm"
+                    placeholder={t('register.placeholderFarm')}
                   />
                 </div>
-
                 <div className="input-group">
-                  <label>Location *</label>
+                  <label>{t('profile.location')} *</label>
                   <input
                     name="location"
                     type="text"
                     required
                     value={formData.location}
                     onChange={handleChange}
-                    placeholder="City, State"
+                    placeholder={t('register.placeholderLocation')}
                   />
                 </div>
               </div>
             ) : (
               <div className="input-group">
-                <label>Delivery Address *</label>
+                <label>{t('profile.address')} *</label>
                 <textarea
                   name="address"
                   required
                   rows="3"
                   value={formData.address}
                   onChange={handleChange}
-                  placeholder="Enter your full address"
+                  placeholder={t('register.placeholderAddress')}
                   style={{ fontFamily: 'inherit' }}
                 ></textarea>
               </div>
@@ -234,15 +233,15 @@ export default function Register() {
               className="btn btn-primary"
               style={{ width: '100%' }}
             >
-              {loading ? 'Creating account...' : 'Create Account'}
+              {loading ? t('register.creatingAccount') : t('register.createAccount')}
             </button>
           </form>
 
           <div style={{ marginTop: '24px', textAlign: 'center', paddingTop: '24px', borderTop: '1px solid #e5e7eb' }}>
             <p style={{ color: '#6b7280' }}>
-              Already have an account?{' '}
+              {t('register.alreadyAccount')}{" "}
               <Link to="/login" style={{ color: '#16a34a', fontWeight: '600', textDecoration: 'none' }}>
-                Sign in here
+                {t('register.signInHere')}
               </Link>
             </p>
           </div>

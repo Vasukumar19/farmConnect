@@ -1,9 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function FarmerProducts() {
   const { user, isAuthenticated } = useAuth();
+  const { t } = useLanguage();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -24,28 +26,21 @@ export default function FarmerProducts() {
   const categories = ['vegetables', 'fruits', 'grains', 'dairy', 'meat', 'herbs', 'other'];
   const units = ['kg', 'gram', 'piece', 'dozen', 'liter'];
 
-  // Wrap loadProducts in useCallback
   const loadProducts = useCallback(async () => {
     try {
       setLoading(true);
-      console.log('Loading farmer products for farmer:', user?.id);
-      
       const response = await api.get('/product/farmer-products');
-      console.log('Products response:', response.data);
-      
       if (response.data.success) {
         setProducts(response.data.data);
       } else {
-        console.error('Failed to load products:', response.data.message);
-        alert(response.data.message || 'Failed to load products');
+        alert(response.data.message || t('product.loadFailed'));
       }
       setLoading(false);
     } catch (error) {
-      console.error('Error loading products:', error);
-      alert(error.response?.data?.message || 'Failed to load products');
+      alert(error.response?.data?.message || t('product.loadFailed'));
       setLoading(false);
     }
-  }, [user?.id]); // loadProducts depends on user?.id (used in console.log)
+  }, [t]);
 
   useEffect(() => {
     if (isAuthenticated && user?.userType === 'farmer') {
@@ -53,11 +48,11 @@ export default function FarmerProducts() {
     } else {
       setLoading(false);
     }
-  }, [isAuthenticated, user?.userType, user?.id, loadProducts]); // Now loadProducts is included
+  }, [isAuthenticated, user?.userType, user?.id, loadProducts]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     const data = new FormData();
     Object.keys(formData).forEach(key => {
       data.append(key, formData[key]);
@@ -71,19 +66,17 @@ export default function FarmerProducts() {
         await api.put(`/product/${editingProduct._id}`, data, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
-        alert('Product updated successfully!');
+        alert(t('product.updateProductSuccess'));
       } else {
         await api.post('/product/add', data, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
-        alert('Product added successfully!');
+        alert(t('product.addProductSuccess'));
       }
-      
       resetForm();
       loadProducts();
     } catch (error) {
-      console.error('Error:', error);
-      alert(error.response?.data?.message || 'Failed to save product');
+      alert(error.response?.data?.message || t('product.saveFailed'));
     }
   };
 
@@ -104,17 +97,15 @@ export default function FarmerProducts() {
   };
 
   const handleDelete = async (productId) => {
-    if (!window.confirm('Are you sure you want to delete this product?')) {
+    if (!window.confirm(t('product.confirmDelete'))) {
       return;
     }
-
     try {
       await api.delete(`/product/${productId}`);
-      alert('Product deleted successfully!');
+      alert(t('product.deleteProductSuccess'));
       loadProducts();
     } catch (error) {
-      console.error('Error deleting:', error);
-      alert(error.response?.data?.message || 'Failed to delete product');
+      alert(error.response?.data?.message || t('product.deleteFailed'));
     }
   };
 
@@ -159,9 +150,9 @@ export default function FarmerProducts() {
         textAlign: 'center'
       }}>
         <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#111827', marginBottom: '16px' }}>
-          Access Denied
+          {t('common.accessDenied')}
         </h2>
-        <p style={{ color: '#6b7280' }}>Only farmers can access this page</p>
+        <p style={{ color: '#6b7280' }}>{t('farmer.onlyFarmersProducts')}</p>
       </div>
     );
   }
@@ -174,12 +165,12 @@ export default function FarmerProducts() {
     }}>
       <div className="max-w-screen">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-          <h1 style={{ fontSize: '32px', fontWeight: '700', color: '#111827' }}>My Products</h1>
+          <h1 style={{ fontSize: '32px', fontWeight: '700', color: '#111827' }}>{t('product.myProducts')}</h1>
           <button
             onClick={() => setShowForm(!showForm)}
             className="btn btn-primary"
           >
-            {showForm ? 'Cancel' : '+ Add Product'}
+            {showForm ? t('common.cancel') : `+ ${t('product.addProduct')}`}
           </button>
         </div>
 
@@ -187,38 +178,37 @@ export default function FarmerProducts() {
         {showForm && (
           <div className="card" style={{ marginBottom: '32px' }}>
             <h2 style={{ fontSize: '24px', fontWeight: '700', marginBottom: '24px' }}>
-              {editingProduct ? 'Edit Product' : 'Add New Product'}
+              {editingProduct ? t('product.editProduct') : t('product.addNew')}
             </h2>
-            
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div className="grid grid-cols-2" style={{ gap: '16px' }}>
                 <div className="input-group">
-                  <label>Product Name *</label>
+                  <label>{t('product.name')} *</label>
                   <input
                     type="text"
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    placeholder="Fresh Tomatoes"
+                    placeholder={t('product.namePlaceholder')}
                   />
                 </div>
 
                 <div className="input-group">
-                  <label>Category *</label>
+                  <label>{t('product.category')} *</label>
                   <select
                     value={formData.category}
                     onChange={(e) => setFormData({...formData, category: e.target.value})}
                   >
                     {categories.map(cat => (
                       <option key={cat} value={cat}>
-                        {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                        {t(`category.${cat}`)}
                       </option>
                     ))}
                   </select>
                 </div>
 
                 <div className="input-group">
-                  <label>Price (₹) *</label>
+                  <label>{t('product.price')} (₹) *</label>
                   <input
                     type="number"
                     step="0.01"
@@ -230,7 +220,7 @@ export default function FarmerProducts() {
                 </div>
 
                 <div className="input-group">
-                  <label>Unit *</label>
+                  <label>{t('product.unit')} *</label>
                   <select
                     value={formData.unit}
                     onChange={(e) => setFormData({...formData, unit: e.target.value})}
@@ -242,7 +232,7 @@ export default function FarmerProducts() {
                 </div>
 
                 <div className="input-group">
-                  <label>Available Quantity *</label>
+                  <label>{t('product.availableQty')} *</label>
                   <input
                     type="number"
                     required
@@ -253,7 +243,7 @@ export default function FarmerProducts() {
                 </div>
 
                 <div className="input-group">
-                  <label>Minimum Order Quantity</label>
+                  <label>{t('product.minOrder')}</label>
                   <input
                     type="number"
                     value={formData.minOrderQuantity}
@@ -264,29 +254,29 @@ export default function FarmerProducts() {
               </div>
 
               <div className="input-group">
-                <label>Description *</label>
+                <label>{t('product.description')} *</label>
                 <textarea
                   required
                   rows="4"
                   value={formData.description}
                   onChange={(e) => setFormData({...formData, description: e.target.value})}
-                  placeholder="Describe your product..."
+                  placeholder={t('product.descriptionPlaceholder')}
                   style={{ fontFamily: 'inherit' }}
                 ></textarea>
               </div>
 
               <div className="input-group">
-                <label>Tags (comma-separated)</label>
+                <label>{t('product.tags')}</label>
                 <input
                   type="text"
                   value={formData.tags}
                   onChange={(e) => setFormData({...formData, tags: e.target.value})}
-                  placeholder="fresh, organic, local"
+                  placeholder={t('product.tagsPlaceholder')}
                 />
               </div>
 
               <div className="input-group">
-                <label>Product Image</label>
+                <label>{t('product.image')}</label>
                 <input
                   type="file"
                   accept="image/*"
@@ -302,7 +292,7 @@ export default function FarmerProducts() {
                   style={{ width: '20px', height: '20px', cursor: 'pointer' }}
                 />
                 <label style={{ fontWeight: '600', cursor: 'pointer' }}>
-                  🌿 Organic Certified
+                  🌿 {t('product.organicCertified')}
                 </label>
               </div>
 
@@ -312,7 +302,7 @@ export default function FarmerProducts() {
                   className="btn btn-primary"
                   style={{ flex: 1 }}
                 >
-                  {editingProduct ? 'Update Product' : 'Add Product'}
+                  {editingProduct ? t('product.updateProduct') : t('product.addProduct')}
                 </button>
                 <button
                   type="button"
@@ -327,7 +317,7 @@ export default function FarmerProducts() {
                     cursor: 'pointer'
                   }}
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
               </div>
             </form>
@@ -338,9 +328,9 @@ export default function FarmerProducts() {
         {products.length === 0 ? (
           <div className="card" style={{ textAlign: 'center', padding: '64px 24px' }}>
             <p style={{ fontSize: '18px', color: '#6b7280', marginBottom: '8px' }}>
-              No products yet
+              {t('product.noProducts')}
             </p>
-            <p style={{ color: '#9ca3af' }}>Add your first product to get started</p>
+            <p style={{ color: '#9ca3af' }}>{t('product.addFirst')}</p>
           </div>
         ) : (
           <div className="grid grid-cols-3">
@@ -356,7 +346,7 @@ export default function FarmerProducts() {
                   <img
                     src={`http://localhost:4000/uploads/${product.images?.[0]}`}
                     alt={product.name}
-                    crossOrigin="anonymous"  // ⭐ ADD THIS
+                    crossOrigin="anonymous"
                     style={{
                       width: '100%',
                       height: '100%',
@@ -368,16 +358,16 @@ export default function FarmerProducts() {
                   />
                   {product.isOrganicCertified && (
                     <span className="badge badge-success" style={{ position: 'absolute', top: '12px', left: '12px' }}>
-                      🌿 Organic
+                      🌿 {t('product.organic')}
                     </span>
                   )}
                   {product.isInStock ? (
                     <span className="badge badge-success" style={{ position: 'absolute', top: '12px', right: '12px' }}>
-                      In Stock
+                      {t('product.inStock')}
                     </span>
                   ) : (
                     <span className="badge badge-danger" style={{ position: 'absolute', top: '12px', right: '12px' }}>
-                      Out of Stock
+                      {t('product.outOfStock')}
                     </span>
                   )}
                 </div>
@@ -388,7 +378,6 @@ export default function FarmerProducts() {
                 <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '12px', minHeight: '36px' }}>
                   {product.description.substring(0, 50)}...
                 </p>
-                
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '12px' }}>
                   <span style={{ fontSize: '20px', fontWeight: '700', color: '#16a34a' }}>
                     ₹{product.price}
@@ -399,8 +388,8 @@ export default function FarmerProducts() {
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#6b7280', marginBottom: '16px' }}>
-                  <span>Available: {product.availableQuantity}</span>
-                  <span className="badge badge-info">{product.category}</span>
+                  <span>{t('product.availableQty')}: {product.availableQuantity}</span>
+                  <span className="badge badge-info">{t(`category.${product.category}`)}</span>
                 </div>
 
                 <div style={{ display: 'flex', gap: '8px' }}>
@@ -409,14 +398,14 @@ export default function FarmerProducts() {
                     className="btn btn-secondary"
                     style={{ flex: 1, fontSize: '14px' }}
                   >
-                    Edit
+                    {t('product.edit')}
                   </button>
                   <button
                     onClick={() => handleDelete(product._id)}
                     className="btn btn-danger"
                     style={{ flex: 1, fontSize: '14px' }}
                   >
-                    Delete
+                    {t('product.delete')}
                   </button>
                 </div>
               </div>

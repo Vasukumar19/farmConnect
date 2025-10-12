@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useCart } from '../context/CartContext';
+import { useLanguage } from '../context/LanguageContext'; // ✅ Import language hook
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
 export default function Checkout() {
-  const { cart, clearCart, refreshCart } = useCart();
+  const { cart, clearCart } = useCart(); // ✅ Removed unused refreshCart
+  const { t } = useLanguage(); // ✅ Get translation function
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [placing, setPlacing] = useState(false);
@@ -14,11 +16,8 @@ export default function Checkout() {
   const [notes, setNotes] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('cash');
 
-  useEffect(() => {
-    loadCartItems();
-  }, [cart]);
-
-  const loadCartItems = async () => {
+  // ✅ Wrap loadCartItems in useCallback to fix ESLint dependency warning
+  const loadCartItems = useCallback(async () => {
     try {
       const items = await Promise.all(
         Object.keys(cart).map(async (productId) => {
@@ -35,7 +34,11 @@ export default function Checkout() {
       console.error('Error loading cart items:', error);
       setLoading(false);
     }
-  };
+  }, [cart]);
+
+  useEffect(() => {
+    loadCartItems();
+  }, [cart, loadCartItems]); // ✅ Added loadCartItems to dependency array
 
   const calculateTotal = () => {
     return cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -43,7 +46,7 @@ export default function Checkout() {
 
   const handlePlaceOrder = async () => {
     if (!pickupDate) {
-      alert('Please select a pickup date');
+      alert(t('cart.selectDate')); // ✅ Translated
       return;
     }
 
@@ -52,7 +55,7 @@ export default function Checkout() {
     today.setHours(0, 0, 0, 0);
 
     if (selectedDate < today) {
-      alert('Pickup date cannot be in the past');
+      alert(t('cart.pastDate')); // ✅ Translated
       return;
     }
 
@@ -70,11 +73,11 @@ export default function Checkout() {
       }
 
       await clearCart();
-      alert('Orders placed successfully!');
+      alert(t('cart.orderSuccess')); // ✅ Translated
       navigate('/my-orders');
     } catch (error) {
       console.error('Error placing order:', error);
-      alert(error.response?.data?.message || 'Failed to place order');
+      alert(error.response?.data?.message || t('common.error')); // ✅ Translated fallback
     } finally {
       setPlacing(false);
     }
@@ -108,16 +111,16 @@ export default function Checkout() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
         </svg>
         <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#111827', marginBottom: '8px' }}>
-          Your cart is empty
+          {t('cart.empty')} {/* ✅ Translated */}
         </h2>
         <p style={{ color: '#6b7280', marginBottom: '24px' }}>
-          Add some products to your cart to continue shopping
+          {t('cart.addProducts')} {/* ✅ Translated */}
         </p>
         <button
           onClick={() => navigate('/')}
           className="btn btn-primary"
         >
-          Continue Shopping
+          {t('cart.continueShopping')} {/* ✅ Translated */}
         </button>
       </div>
     );
@@ -133,7 +136,7 @@ export default function Checkout() {
     }}>
       <div className="max-w-screen">
         <h1 style={{ fontSize: '32px', fontWeight: '700', color: '#111827', marginBottom: '32px' }}>
-          Checkout
+          {t('cart.checkout')} {/* ✅ Translated */}
         </h1>
 
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '32px' }}>
@@ -141,7 +144,7 @@ export default function Checkout() {
           <div>
             <div className="card">
               <h2 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '24px' }}>
-                Order Items
+                {t('cart.items')} {/* ✅ Translated */}
               </h2>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 {cartItems.map((item) => (
@@ -167,7 +170,7 @@ export default function Checkout() {
                     <div style={{ flex: 1 }}>
                       <h3 style={{ fontWeight: '600', marginBottom: '4px' }}>{item.name}</h3>
                       <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '8px' }}>
-                        Qty: {item.quantity} {item.unit}
+                        {t('product.quantity')}: {item.quantity} {item.unit} {/* ✅ Translated */}
                       </p>
                       <p style={{ fontSize: '18px', fontWeight: '700', color: '#16a34a' }}>
                         ₹{item.price * item.quantity}
@@ -181,13 +184,14 @@ export default function Checkout() {
             {/* Order Details Form */}
             <div className="card" style={{ marginTop: '24px' }}>
               <h2 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '24px' }}>
-                Order Details
+                {t('cart.orderDetails')} {/* ✅ Translated */}
               </h2>
               
               <div className="input-group">
-                <label>Pickup Date *</label>
+                 <label>{t('cart.pickupDate')} *</label>
+
                 <input
-                  type="date"// ... continued from above ...
+                  type="date"
                   value={pickupDate}
                   onChange={(e) => setPickupDate(e.target.value)}
                   min={new Date().toISOString().split('T')[0]}
@@ -195,25 +199,25 @@ export default function Checkout() {
               </div>
 
               <div className="input-group">
-                <label>Payment Method *</label>
+                <label>{t('cart.paymentMethod')} *</label> {/* ✅ Translated */}
                 <select
                   value={paymentMethod}
                   onChange={(e) => setPaymentMethod(e.target.value)}
                 >
-                  <option value="cash">Cash on Pickup</option>
-                  <option value="upi">UPI</option>
-                  <option value="card">Card</option>
-                  <option value="net_banking">Net Banking</option>
+                  <option value="cash">{t('payment.cash')}</option> {/* ✅ Translated */}
+                  <option value="upi">{t('payment.upi')}</option> {/* ✅ Translated */}
+                  <option value="card">{t('payment.card')}</option> {/* ✅ Translated */}
+                  <option value="net_banking">{t('payment.netBanking')}</option> {/* ✅ Translated */}
                 </select>
               </div>
 
               <div className="input-group">
-                <label>Notes (Optional)</label>
+                <label>{t('cart.notes')}</label> {/* ✅ Translated */}
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   rows="3"
-                  placeholder="Any special instructions..."
+                  placeholder={t('cart.notes')} // ✅ Translated
                   style={{ fontFamily: 'inherit' }}
                 ></textarea>
               </div>
@@ -224,16 +228,16 @@ export default function Checkout() {
           <div>
             <div className="card" style={{ position: 'sticky', top: '100px' }}>
               <h2 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '24px' }}>
-                Order Summary
+                {t('cart.summary')} {/* ✅ Translated */}
               </h2>
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', color: '#6b7280' }}>
-                  <span>Subtotal</span>
+                  <span>{t('cart.subtotal')}</span> {/* ✅ Translated */}
                   <span>₹{total.toFixed(2)}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', color: '#6b7280' }}>
-                  <span>Items</span>
+                  <span>{t('order.total')}</span> {/* ✅ Translated */}
                   <span>{cartItems.length}</span>
                 </div>
                 <div style={{
@@ -244,7 +248,7 @@ export default function Checkout() {
                   paddingTop: '12px',
                   borderTop: '1px solid #e5e7eb'
                 }}>
-                  <span>Total</span>
+                  <span>{t('cart.total')}</span> {/* ✅ Translated */}
                   <span style={{ color: '#16a34a' }}>₹{total.toFixed(2)}</span>
                 </div>
               </div>
@@ -255,7 +259,7 @@ export default function Checkout() {
                 className="btn btn-primary"
                 style={{ width: '100%', marginBottom: '12px' }}
               >
-                {placing ? 'Placing Orders...' : 'Place Orders'}
+                {placing ? t('cart.placingOrders') : t('cart.placeOrders')} {/* ✅ Translated */}
               </button>
 
               <button
@@ -271,7 +275,7 @@ export default function Checkout() {
                   cursor: 'pointer'
                 }}
               >
-                Continue Shopping
+                {t('cart.continueShopping')} {/* ✅ Translated */}
               </button>
             </div>
           </div>

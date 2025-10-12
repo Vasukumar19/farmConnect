@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Profile() {
   const { user, updateUserData, isAuthenticated } = useAuth();
+  const { t } = useLanguage();
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -15,7 +17,6 @@ export default function Profile() {
     location: ''
   });
 
-  // Update formData whenever user changes - with proper null/undefined handling
   useEffect(() => {
     if (user) {
       setFormData({
@@ -33,57 +34,45 @@ export default function Profile() {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value || '' // Ensure empty string instead of undefined
+      [name]: value || ''
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
     try {
-      // Validate that required fields are not empty
       if (!formData.name || !formData.phone || !formData.email) {
-        alert('Name, phone, and email are required fields');
+        alert(t('profile.requiredFields'));
         setLoading(false);
         return;
       }
-
-      // Prepare data to send - only send fields that are not empty
       const updateData = {
         name: formData.name,
         phone: formData.phone,
         email: formData.email
       };
-
-      // Add conditional fields based on user type
       if (user?.userType === 'farmer') {
         if (formData.farmName) updateData.farmName = formData.farmName;
         if (formData.location) updateData.location = formData.location;
       } else {
         if (formData.address) updateData.address = formData.address;
       }
-
-      // Send update to backend
       const response = await api.put('/user/profile', updateData);
-      
       if (response.data.success) {
-        // Update local context with new data
         updateUserData(formData);
         setEditing(false);
-        alert('Profile updated successfully!');
+        alert(t('profile.updateSuccess'));
       } else {
-        alert(response.data.message || 'Failed to update profile');
+        alert(response.data.message || t('profile.updateFailed'));
       }
     } catch (error) {
-      console.error('Error updating profile:', error);
-      alert(error.response?.data?.message || 'Failed to update profile');
+      alert(error.response?.data?.message || t('profile.updateFailed'));
     } finally {
       setLoading(false);
     }
   };
 
-  // Wait for user data to load
   if (!isAuthenticated || !user || !user.userType) {
     return (
       <div style={{
@@ -92,7 +81,7 @@ export default function Profile() {
         alignItems: 'center',
         justifyContent: 'center'
       }}>
-        <p style={{ color: '#6b7280' }}>Loading profile...</p>
+        <p style={{ color: '#6b7280' }}>{t('profile.loading')}</p>
       </div>
     );
   }
@@ -131,10 +120,10 @@ export default function Profile() {
             </div>
             <div>
               <h1 style={{ fontSize: '28px', fontWeight: '700', marginBottom: '4px' }}>
-                {formData.name || 'Profile'}
+                {formData.name || t('profile.profile')}
               </h1>
               <p style={{ opacity: 0.9, fontSize: '16px' }}>
-                {user?.userType === 'farmer' ? '🌾 Farmer' : '🛒 Customer'}
+                {user?.userType === 'farmer' ? t('profile.farmer') : t('profile.customer')}
               </p>
             </div>
           </div>
@@ -142,52 +131,47 @@ export default function Profile() {
           {!editing ? (
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                <h2 style={{ fontSize: '24px', fontWeight: '700' }}>Profile Information</h2>
+                <h2 style={{ fontSize: '24px', fontWeight: '700' }}>{t('profile.info')}</h2>
                 <button
                   onClick={() => setEditing(true)}
                   className="btn btn-primary"
                 >
-                  Edit Profile
+                  {t('profile.editProfile')}
                 </button>
               </div>
-
               <div className="grid grid-cols-2" style={{ gap: '16px' }}>
                 <div style={{
                   background: '#f3f4f6',
                   borderRadius: '8px',
                   padding: '16px'
                 }}>
-                  <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Full Name</p>
-                  <p style={{ fontSize: '16px', fontWeight: '600' }}>{formData.name || 'N/A'}</p>
+                  <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>{t('profile.fullName')}</p>
+                  <p style={{ fontSize: '16px', fontWeight: '600' }}>{formData.name || t('profile.na')}</p>
                 </div>
-
                 <div style={{
                   background: '#f3f4f6',
                   borderRadius: '8px',
                   padding: '16px'
                 }}>
-                  <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Email Address</p>
-                  <p style={{ fontSize: '16px', fontWeight: '600' }}>{formData.email || 'N/A'}</p>
+                  <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>{t('profile.email')}</p>
+                  <p style={{ fontSize: '16px', fontWeight: '600' }}>{formData.email || t('profile.na')}</p>
                 </div>
-
                 <div style={{
                   background: '#f3f4f6',
                   borderRadius: '8px',
                   padding: '16px'
                 }}>
-                  <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Phone Number</p>
-                  <p style={{ fontSize: '16px', fontWeight: '600' }}>{formData.phone || 'Not provided'}</p>
+                  <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>{t('profile.phone')}</p>
+                  <p style={{ fontSize: '16px', fontWeight: '600' }}>{formData.phone || t('profile.notProvided')}</p>
                 </div>
-
                 <div style={{
                   background: '#f3f4f6',
                   borderRadius: '8px',
                   padding: '16px'
                 }}>
-                  <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Account Type</p>
+                  <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>{t('profile.accountType')}</p>
                   <p style={{ fontSize: '16px', fontWeight: '600', textTransform: 'capitalize' }}>{user?.userType}</p>
                 </div>
-
                 {user?.userType === 'farmer' && (
                   <>
                     <div style={{
@@ -195,21 +179,19 @@ export default function Profile() {
                       borderRadius: '8px',
                       padding: '16px'
                     }}>
-                      <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Farm Name</p>
-                      <p style={{ fontSize: '16px', fontWeight: '600' }}>{formData.farmName || 'Not provided'}</p>
+                      <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>{t('profile.farmName')}</p>
+                      <p style={{ fontSize: '16px', fontWeight: '600' }}>{formData.farmName || t('profile.notProvided')}</p>
                     </div>
-
                     <div style={{
                       background: '#f3f4f6',
                       borderRadius: '8px',
                       padding: '16px'
                     }}>
-                      <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Location</p>
-                      <p style={{ fontSize: '16px', fontWeight: '600' }}>{formData.location || 'Not provided'}</p>
+                      <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>{t('profile.location')}</p>
+                      <p style={{ fontSize: '16px', fontWeight: '600' }}>{formData.location || t('profile.notProvided')}</p>
                     </div>
                   </>
                 )}
-
                 {user?.userType === 'customer' && (
                   <div style={{
                     background: '#f3f4f6',
@@ -217,14 +199,13 @@ export default function Profile() {
                     padding: '16px',
                     gridColumn: '1 / -1'
                   }}>
-                    <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Delivery Address</p>
-                    <p style={{ fontSize: '16px', fontWeight: '600' }}>{formData.address || 'Not provided'}</p>
+                    <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>{t('profile.address')}</p>
+                    <p style={{ fontSize: '16px', fontWeight: '600' }}>{formData.address || t('profile.notProvided')}</p>
                   </div>
                 )}
               </div>
-
               <div style={{ marginTop: '32px', paddingTop: '32px', borderTop: '1px solid #e5e7eb' }}>
-                <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Account Status</h3>
+                <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>{t('profile.status')}</h3>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <div style={{
                     width: '12px',
@@ -232,21 +213,20 @@ export default function Profile() {
                     background: '#10b981',
                     borderRadius: '50%'
                   }}></div>
-                  <span style={{ fontWeight: '600' }}>Active Account</span>
+                  <span style={{ fontWeight: '600' }}>{t('profile.active')}</span>
                   <span style={{ color: '#9ca3af' }}>•</span>
                   <span style={{ color: '#6b7280' }}>
-                    Member since {new Date(user?.createdAt || Date.now()).toLocaleDateString('en-US', { year: 'numeric', month: 'long' })}
+                    {t('profile.memberSince')} {new Date(user?.createdAt || Date.now()).toLocaleDateString('en-US', { year: 'numeric', month: 'long' })}
                   </span>
                 </div>
               </div>
             </div>
           ) : (
             <form onSubmit={handleSubmit}>
-              <h2 style={{ fontSize: '24px', fontWeight: '700', marginBottom: '24px' }}>Edit Profile</h2>
-
+              <h2 style={{ fontSize: '24px', fontWeight: '700', marginBottom: '24px' }}>{t('profile.editProfile')}</h2>
               <div className="grid grid-cols-2" style={{ gap: '16px', marginBottom: '24px' }}>
                 <div className="input-group">
-                  <label>Full Name *</label>
+                  <label>{t('profile.fullName')} *</label>
                   <input
                     type="text"
                     name="name"
@@ -255,9 +235,8 @@ export default function Profile() {
                     required
                   />
                 </div>
-
                 <div className="input-group">
-                  <label>Phone Number *</label>
+                  <label>{t('profile.phone')} *</label>
                   <input
                     type="tel"
                     name="phone"
@@ -267,9 +246,8 @@ export default function Profile() {
                   />
                 </div>
               </div>
-
               <div className="input-group">
-                <label>Email Address</label>
+                <label>{t('profile.email')}</label>
                 <input
                   type="email"
                   name="email"
@@ -277,13 +255,12 @@ export default function Profile() {
                   disabled
                   style={{ background: '#f3f4f6', cursor: 'not-allowed' }}
                 />
-                <small style={{ marginTop: '4px', color: '#6b7280' }}>Email cannot be changed</small>
+                <small style={{ marginTop: '4px', color: '#6b7280' }}>{t('profile.emailNoChange')}</small>
               </div>
-
               {user?.userType === 'farmer' && (
                 <div className="grid grid-cols-2" style={{ gap: '16px', marginBottom: '24px' }}>
                   <div className="input-group">
-                    <label>Farm Name</label>
+                    <label>{t('profile.farmName')}</label>
                     <input
                       type="text"
                       name="farmName"
@@ -291,9 +268,8 @@ export default function Profile() {
                       onChange={handleChange}
                     />
                   </div>
-
                   <div className="input-group">
-                    <label>Location</label>
+                    <label>{t('profile.location')}</label>
                     <input
                       type="text"
                       name="location"
@@ -303,10 +279,9 @@ export default function Profile() {
                   </div>
                 </div>
               )}
-
               {user?.userType === 'customer' && (
                 <div className="input-group">
-                  <label>Delivery Address</label>
+                  <label>{t('profile.address')}</label>
                   <textarea
                     name="address"
                     rows="3"
@@ -316,7 +291,6 @@ export default function Profile() {
                   ></textarea>
                 </div>
               )}
-
               <div style={{ display: 'flex', gap: '12px' }}>
                 <button
                   type="submit"
@@ -324,13 +298,12 @@ export default function Profile() {
                   className="btn btn-primary"
                   style={{ flex: 1 }}
                 >
-                  {loading ? 'Saving...' : 'Save Changes'}
+                  {loading ? t('profile.saving') : t('profile.save')}
                 </button>
                 <button
                   type="button"
                   onClick={() => {
                     setEditing(false);
-                    // Reset formData to current user data
                     setFormData({
                       name: user?.name || '',
                       phone: user?.phone || '',
@@ -350,7 +323,7 @@ export default function Profile() {
                     cursor: 'pointer'
                   }}
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
               </div>
             </form>

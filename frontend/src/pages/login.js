@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -8,16 +9,15 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
-
     try {
       const result = await login({ email, password });
-      
       if (result.success) {
         if (result.user.userType === 'farmer') {
           navigate('/farmer-products');
@@ -25,10 +25,10 @@ export default function Login() {
           navigate('/');
         }
       } else {
-        setError(result.message || 'Login failed');
+        setError(result.message || t('login.loginFailed'));
       }
     } catch (err) {
-      setError('An error occurred. Please try again.');
+      setError(t('login.errorOccurred'));
     } finally {
       setLoading(false);
     }
@@ -60,11 +60,10 @@ export default function Login() {
             </svg>
           </div>
           <h2 style={{ fontSize: '28px', fontWeight: '700', color: '#111827', marginBottom: '8px' }}>
-            Welcome Back
+            {t('login.welcomeBack')}
           </h2>
-          <p style={{ color: '#6b7280' }}>Sign in to your FreshConnect account</p>
+          <p style={{ color: '#6b7280' }}>{t('login.signInToAccount')}</p>
         </div>
-
         <div className="card">
           {error && (
             <div style={{
@@ -83,30 +82,27 @@ export default function Login() {
               <p style={{ fontSize: '14px', color: '#991b1b' }}>{error}</p>
             </div>
           )}
-
           <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div className="input-group">
-              <label>Email Address</label>
+              <label>{t('login.emailAddress')}</label>
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@email.com"
+                placeholder={t('login.emailPlaceholder')}
               />
             </div>
-
             <div className="input-group">
-              <label>Password</label>
+              <label>{t('login.password')}</label>
               <input
                 type="password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder={t('login.passwordPlaceholder')}
               />
             </div>
-
             <button
               type="submit"
               disabled={loading}
@@ -116,26 +112,24 @@ export default function Login() {
               {loading ? (
                 <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
                   <span className="spinner" style={{ width: '20px', height: '20px', borderWidth: '2px' }}></span>
-                  Signing in...
+                  {t('login.signingIn')}
                 </span>
               ) : (
-                'Sign In'
+                t('login.signIn')
               )}
             </button>
           </form>
-
           <div style={{ marginTop: '24px', textAlign: 'center', paddingTop: '24px', borderTop: '1px solid #e5e7eb' }}>
             <p style={{ color: '#6b7280' }}>
-              Don't have an account?{' '}
+              {t('login.noAccount')}{" "}
               <Link to="/register" style={{ color: '#16a34a', fontWeight: '600', textDecoration: 'none' }}>
-                Sign up here
+                {t('login.signUpHere')}
               </Link>
             </p>
           </div>
         </div>
-
         <div style={{ marginTop: '24px', textAlign: 'center', fontSize: '12px', color: '#6b7280' }}>
-          <p>By signing in, you agree to our Terms of Service and Privacy Policy</p>
+          <p>{t('login.agreeTerms')}</p>
         </div>
       </div>
     </div>

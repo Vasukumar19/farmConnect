@@ -1,0 +1,35 @@
+# Environment Variables Template
+# Copy this file to .env and fill in your actual values
+
+# Database Configuration
+MONGODB_URI=mongodb://localhost:27017/freshconnect
+
+# JWT Configuration
+
+
+# Server Configuration
+PORT=4000
+NODE_ENV=development
+CORS_ORIGIN=http://localhost:3000
+
+# Twilio WhatsApp API Configuration (FREE TRIAL - Professional & Reliable)
+TWILIO_ACCOUNT_SID=AC8615663f06c7a51cb074d3a4e76e6558
+TWILIO_AUTH_TOKEN=9eecfbe973a71a1c8f0d3e18222e0eb3
+TWILIO_WHATSAPP_NUMBER=+14155238886
+
+# Instructions for Twilio WhatsApp Setup (Perfect for College Projects):
+# 1. Sign up for a FREE Twilio account at https://www.twilio.com/
+# 2. Verify your email and phone number
+# 3. Go to Console Dashboard and copy your Account SID and Auth Token
+# 4. Navigate to Messaging > Try it Out > Send a WhatsApp message
+# 5. Follow the sandbox setup instructions to connect your WhatsApp
+# 6. Use the sandbox WhatsApp number: +14155238886 (or get your own)
+# 7. Add the credentials above to your .env file
+
+# Benefits of Twilio:
+# ✅ FREE trial with $15 credit (enough for hundreds of messages)
+# ✅ Professional and reliable service
+# ✅ Easy sandbox setup for testing
+# ✅ Can send to any WhatsApp number (not just your own)
+# ✅ Perfect for college project demos
+# ✅ Easy transition to production if needed
